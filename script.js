@@ -12,7 +12,7 @@ let focusX, focusY;
 //Mic
 let mic;
 let amp;
-let imprimir = true;
+let imprimir = false;
 let antesHabiaSonido = false;
 let audioContext;
 let pitch;
@@ -164,7 +164,6 @@ function actualizarMic() {
     let empezoSonido = haySonido && !antesHabiaSonido;
     let finSonido = !haySonido && antesHabiaSonido;
     aplauso(empezoSonido, finSonido);
-    text(haySonido, 20, 50);
     if (imprimir) {
         printData();
     }
