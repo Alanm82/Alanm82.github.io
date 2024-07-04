@@ -28,9 +28,14 @@ let ampMin = 0.002;
 let ampMax = 0.3;
 let frecMin = 300;
 let frecMax = 1000;
-let haySonido = false;
+let silbido = 0;
 let gestorAmp;
 const modelUrl = 'https://cdn.jsdelivr.net/gh/ml5js/ml5-data-and-models/models/pitch-detection/crepe/';
+
+//SonidoParametros
+let haySonido = false;
+let empezoSilencio;
+let tiempoSilencio = 0;
 
 function setup() {
     // Determinar la cantidad de filas y columnas adicionales
@@ -116,7 +121,6 @@ function setup() {
         ]
     ];
 
-
     colors = random(palettes);
 
     // Determinar el modo de brillo
@@ -146,7 +150,12 @@ function setup() {
     iniciarMic();
     drawGrid();
 }
+    
 
+
+function luminosity(c) {
+    return 0.2126 * red(c) + 0.7152 * green(c) + 0.0722 * blue(c);
+}
 
 function iniciarMic() {
     userStartAudio();
@@ -160,15 +169,25 @@ function iniciarMic() {
 function actualizarMic() {
     gestorAmp.actualizar(mic.getLevel());
     amp = gestorAmp.filtrada;
+    fill(255);
+    //text("Frecuencia constante de " + gestorPitch.filtrada, 50, 200);
     haySonido = amp > 0.01;
+    if(!haySonido){
+        //gestorPitch.filtrada=0;
+    }
     let empezoSonido = haySonido && !antesHabiaSonido;
     let finSonido = !haySonido && antesHabiaSonido;
-    aplauso(empezoSonido, finSonido);
+    if (finSonido == true) {
+        empezoSilencio = !haySonido;
+    } else if (empezoSonido == true) {
+        empezoSilencio = !haySonido;
+    }
+    gestosSonoros(empezoSonido, finSonido);
     if (imprimir) {
         printData();
     }
-
     antesHabiaSonido = haySonido;
+    silencioReiniciar(empezoSilencio);
 }
 
 
@@ -202,6 +221,7 @@ function printData() {
     pop();
     gestorAmp.dibujar(300, 500);
     gestorPitch.dibujar(250, 300);
+    console.log("haySonido" + haySonido);
 }
 
 
@@ -219,7 +239,7 @@ function drawGrid() {
             }
 
             if (!enlarged) {
-                drawSquare(i, j);
+                drawSquare(i, j, false, silbido);
             }
         }
     }
@@ -227,15 +247,29 @@ function drawGrid() {
     for (let k = 0; k < enlargedSquares.length; k++) {
         let i = enlargedSquares[k][0];
         let j = enlargedSquares[k][1];
-        drawSquare(i, j, true);
+        drawSquare(i, j, true, false, silbido);
     }
 }
 
-function aplauso(empezo, termino) {
+function silencioReiniciar(iniciaSilencio) {
+    if (iniciaSilencio) {
+        if (tiempoSilencio === 0) {
+            tiempoSilencio = millis();
+            console.log("IniciaSilencio " + tiempoSilencio);
+        } else if (millis() - tiempoSilencio > 5000) {
+            console.log("El silencio superó los 5 segundos");
+            redrawGrid();
+        }
+    } else {
+        tiempoSilencio = 0;
+    }
+}
 
+function gestosSonoros(empezo, termino) {
     if (empezo) {
         tiempoInicioSonido = millis();
         ampMaximo = amp;
+        pitchMaximo = gestorPitch.filtrada;
         console.log(tiempoInicioSonido);
     }
 
@@ -243,17 +277,30 @@ function aplauso(empezo, termino) {
         if (amp > ampMaximo) {
             ampMaximo = amp; // Actualizar el valor máximo si la amplitud actual es mayor
         }
+        if (gestorPitch.filtrada > pitchMaximo) {
+            pitchMaximo = gestorPitch.filtrada; // Actualizar el valor máximo de pitch 
+        }
+
+        /* Frecuencia iniciada */
+        if (gestorPitch.filtrada > 0.4) {
+            fill(0);
+            //text("Frecuencia constante de " + gestorPitch.filtrada, 50, 200);
+
+            // Calcular silbido proporcional a la frecuencia filtrada
+            silbido = round(map(gestorPitch.filtrada, 0.4, 1.0, 0, 13));
+            console.log("silbido es " + silbido);
+        }
     }
 
     if (termino) {
         let duracionSonido = millis() - tiempoInicioSonido;
 
-        if (duracionSonido < 500 && ampMaximo > 0.2) { // Duración máxima y amplitud mínima para considerar un aplauso
+        if (duracionSonido < 500 && ampMaximo > 0.2 && pitchMaximo < 0.3) { // Duración máxima y amplitud mínima para considerar un aplauso
             console.log("Aplauso detectado con amplitud máxima de: " + ampMaximo);
 
             let posX = round(random(0, 15));
             let posY = round(random(0, 15));
-        
+
             if (posX > 0 && posX < gridDivsX - 1 && posY > 0 && posY < gridDivsY - 1) {
                 // Verificar si la nueva posición es diferente de la posición anterior
                 if (posX != previousPos[0] || posY != previousPos[1]) {
@@ -266,7 +313,9 @@ function aplauso(empezo, termino) {
         }
     }
 }
-function drawSquare(x, y, enlarged = false) {
+
+
+function drawSquare(x, y, enlarged = false, s = 0) {
     var x0 = grid[x][y][0];
     var y0 = grid[x][y][1];
     var xn = grid[x + 1][y][0];
@@ -276,7 +325,19 @@ function drawSquare(x, y, enlarged = false) {
     var xp = grid[x + 1][y + 1][0];
     var yp = grid[x + 1][y + 1][1];
 
-    let col = gridColors[x][y];
+    var gridLengthX = grid.length;
+    var gridLengthY = grid[0].length;
+    var colorsLengthX = gridColors.length;
+    var colorsLengthY = gridColors[0].length;
+
+    // Asegurarse de que los índices no salgan del rango de la matriz
+    let colX = (x + s) % colorsLengthX;
+    let colY = (y + s) % colorsLengthY;
+
+    if (colX < 0) colX += colorsLengthX;
+    if (colY < 0) colY += colorsLengthY;
+
+    let col = gridColors[colX][colY];
     let brightnessFactor;
 
     if (haySonido) {
@@ -291,17 +352,24 @@ function drawSquare(x, y, enlarged = false) {
         brightnessFactor = 0.5;
     }
 
-
     col = lerpColor(color(0), col, brightnessFactor);
     fill(col);
     noStroke();
 
     if (enlarged) {
+        var xn2 = grid[x + 2][y][0];  // Vértice derecho del vecino derecho
+        var yn2 = grid[x + 2][y][1];
+        var xm2 = grid[x][y + 2][0];  // Vértice inferior del vecino inferior
+        var ym2 = grid[x][y + 2][1];
+        var xp2 = grid[x + 2][y + 2][0];  // Vértice derecho inferior del vecino derecho inferior
+        var yp2 = grid[x + 2][y + 2][1];
+
+        console.log(col + "Color cambiadno?");
         beginShape();
         vertex(x0, y0);
-        vertex(xn + gridSpacingX, yn);
-        vertex(xp + gridSpacingX, yp + gridSpacingY);
-        vertex(xm, ym + gridSpacingY);
+        vertex(xn2, yn2);
+        vertex(xp2, yp2);
+        vertex(xm2, ym2);
         endShape(CLOSE);
     } else {
         beginShape();
@@ -312,6 +380,7 @@ function drawSquare(x, y, enlarged = false) {
         endShape(CLOSE);
     }
 }
+
 
 function mousePressed() {
     let clickedX = floor((mouseX - pad) / gridSpacingX);
@@ -346,5 +415,4 @@ function redrawGrid() {
 function draw() {
     redrawGrid();
     actualizarMic();
-    aplauso();
 }
