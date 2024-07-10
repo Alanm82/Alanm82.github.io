@@ -13,7 +13,7 @@ let focusX, focusY;
 //Mic
 let mic;
 let amp;
-let imprimir = true;
+let imprimir = false;
 let antesHabiaSonido = false;
 let audioContext;
 let pitch;
@@ -180,8 +180,6 @@ function actualizarMic() {
     gestorAmp.actualizar(mic.getLevel());
     amp = gestorAmp.filtrada;
     fill(255);
-    text("amplitud constante de " + amp, 50, 200);
-    text("Frecuencia constante de " + gestorPitch.filtrada, 50, 250);
     haySonido = amp > 0.01;
 
     if (!haySonido) {
@@ -229,11 +227,8 @@ function printData() {
     push();
     textSize(12);
     fill(255);
-    let texto = "amplitud";
-    if (amp > 0.001) {
-        texto = "amplitud " + amp;
-    }
-    text(texto, 20, 20);
+    text("amplitud constante de " + amp, 50, 200);
+    text("Frecuencia constante de " + gestorPitch.filtrada, 50, 250);
     pop();
     gestorAmp.dibujar(300, 500);
     gestorPitch.dibujar(250, 300);
@@ -276,7 +271,7 @@ function silencioReiniciar(iniciaSilencio) {
             tiempoSilencio = millis();
             console.log("IniciaSilencio " + tiempoSilencio);
         } else if (millis() - tiempoSilencio > 10000) {
-            console.log("El silencio superó los 5 segundos");
+            //console.log("El silencio superó los 5 segundos");
             reiniciar();
         }
     } else {
@@ -303,7 +298,6 @@ function gestosSonoros(empezo, termino) {
         /* Frecuencia iniciada */
         if (gestorPitch.filtrada > 0.05) {
             fill(0);
-            //text("Frecuencia constante de " + gestorPitch.filtrada, 50, 200);
 
             // Calcular silbido proporcional a la frecuencia filtrada
             silbido = round(map(gestorPitch.filtrada, 0.05, 1.0, 0, 13));
