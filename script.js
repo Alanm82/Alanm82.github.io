@@ -9,10 +9,11 @@ let enlargedSquares = [];
 let brightnessMode;
 let focusX, focusY;
 
+
 //Mic
 let mic;
 let amp;
-let imprimir = false;
+let imprimir = true;
 let antesHabiaSonido = false;
 let audioContext;
 let pitch;
@@ -26,19 +27,29 @@ let tiempoLimite = 5000;
 //MicConfig
 let ampMin = 0.002;
 let ampMax = 0.3;
-let frecMin = 300;
+let frecMin = 200;
 let frecMax = 1000;
 let silbido = 0;
 let gestorAmp;
 const modelUrl = 'https://cdn.jsdelivr.net/gh/ml5js/ml5-data-and-models/models/pitch-detection/crepe/';
+let textura;
 
 //SonidoParametros
 let haySonido = false;
 let empezoSilencio;
 let tiempoSilencio = 0;
+let detectaFrecuencia = false;
 
+function preload() {
+    textura = loadImage("/imagenes/textura1.jpg");
+}
 function setup() {
-    // Determinar la cantidad de filas y columnas adicionales
+
+    reiniciar(); //ACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+}
+
+function reiniciar() {
+
     let gridAdjustment = random();
     if (gridAdjustment < 0.25) {
         gridDivsX += 2; // 25% - Una columna más a cada lado
@@ -50,7 +61,6 @@ function setup() {
     w = (min(windowWidth, windowHeight) / 15) * gridDivsX;
     h = (min(windowWidth, windowHeight) / 15) * gridDivsY;
     createCanvas(w, h);
-
     pad = min(w, h) / 12;
     strokeWeight(4);
 
@@ -150,7 +160,7 @@ function setup() {
     iniciarMic();
     drawGrid();
 }
-    
+
 
 
 function luminosity(c) {
@@ -170,11 +180,17 @@ function actualizarMic() {
     gestorAmp.actualizar(mic.getLevel());
     amp = gestorAmp.filtrada;
     fill(255);
-    //text("Frecuencia constante de " + gestorPitch.filtrada, 50, 200);
+    text("amplitud constante de " + amp, 50, 200);
+    text("Frecuencia constante de " + gestorPitch.filtrada, 50, 250);
     haySonido = amp > 0.01;
-    if(!haySonido){
-        //gestorPitch.filtrada=0;
+
+    if (!haySonido) {
+        detectaFrecuencia = false;
+        gestorPitch.filtrada = 0; // Reiniciar la frecuencia cuando no hay sonido
+    } else {
+        detectaFrecuencia = true;
     }
+
     let empezoSonido = haySonido && !antesHabiaSonido;
     let finSonido = !haySonido && antesHabiaSonido;
     if (finSonido == true) {
@@ -228,6 +244,7 @@ function printData() {
 function drawGrid() {
     background(0);
 
+
     for (let i = 0; i < gridDivsX; i++) {
         for (let j = 0; j < gridDivsY; j++) {
             let enlarged = false;
@@ -247,8 +264,10 @@ function drawGrid() {
     for (let k = 0; k < enlargedSquares.length; k++) {
         let i = enlargedSquares[k][0];
         let j = enlargedSquares[k][1];
-        drawSquare(i, j, true, false, silbido);
+        let expansionType = enlargedSquares[k][2] || 'normal';
+        drawSquare(i, j, true, 0, expansionType);
     }
+
 }
 
 function silencioReiniciar(iniciaSilencio) {
@@ -256,9 +275,9 @@ function silencioReiniciar(iniciaSilencio) {
         if (tiempoSilencio === 0) {
             tiempoSilencio = millis();
             console.log("IniciaSilencio " + tiempoSilencio);
-        } else if (millis() - tiempoSilencio > 5000) {
+        } else if (millis() - tiempoSilencio > 10000) {
             console.log("El silencio superó los 5 segundos");
-            redrawGrid();
+            reiniciar();
         }
     } else {
         tiempoSilencio = 0;
@@ -282,38 +301,42 @@ function gestosSonoros(empezo, termino) {
         }
 
         /* Frecuencia iniciada */
-        if (gestorPitch.filtrada > 0.4) {
+        if (gestorPitch.filtrada > 0.05) {
             fill(0);
             //text("Frecuencia constante de " + gestorPitch.filtrada, 50, 200);
 
             // Calcular silbido proporcional a la frecuencia filtrada
-            silbido = round(map(gestorPitch.filtrada, 0.4, 1.0, 0, 13));
+            silbido = round(map(gestorPitch.filtrada, 0.05, 1.0, 0, 13));
             console.log("silbido es " + silbido);
         }
     }
 
     if (termino) {
         let duracionSonido = millis() - tiempoInicioSonido;
+        if (pitchMaximo < 0.3 || !pitchDetection) {
+            if (duracionSonido < 1000 && ampMaximo > 0.2) { // Duración máxima y amplitud mínima para considerar un aplauso
+                console.log("Aplauso detectado con amplitud máxima de: " + ampMaximo);
 
-        if (duracionSonido < 500 && ampMaximo > 0.2 && pitchMaximo < 0.3) { // Duración máxima y amplitud mínima para considerar un aplauso
-            console.log("Aplauso detectado con amplitud máxima de: " + ampMaximo);
+                let posX = round(random(0, 15));
+                let posY = round(random(0, 15));
 
-            let posX = round(random(0, 15));
-            let posY = round(random(0, 15));
+                if (posX > 0 && posX < gridDivsX - 1 && posY > 0 && posY < gridDivsY - 1) {
+                    // Verificar si la nueva posición es diferente de la posición anterior
+                    if (posX != previousPos[0] || posY != previousPos[1]) {
+                        enlargeSquare(posX, posY);
+                        // Actualizar la posición anterior
+                        previousPos = [posX, posY];
+                    }
 
-            if (posX > 0 && posX < gridDivsX - 1 && posY > 0 && posY < gridDivsY - 1) {
-                // Verificar si la nueva posición es diferente de la posición anterior
-                if (posX != previousPos[0] || posY != previousPos[1]) {
-                    enlargeSquare(posX, posY);
-                    // Actualizar la posición anterior
-                    previousPos = [posX, posY];
                 }
-
             }
+
         }
     }
 }
 
+// Variable global para almacenar los tipos de ampliación de cada celda agrandada
+var enlargementTypes = {};
 
 function drawSquare(x, y, enlarged = false, s = 0) {
     var x0 = grid[x][y][0];
@@ -357,20 +380,75 @@ function drawSquare(x, y, enlarged = false, s = 0) {
     noStroke();
 
     if (enlarged) {
-        var xn2 = grid[x + 2][y][0];  // Vértice derecho del vecino derecho
-        var yn2 = grid[x + 2][y][1];
-        var xm2 = grid[x][y + 2][0];  // Vértice inferior del vecino inferior
-        var ym2 = grid[x][y + 2][1];
-        var xp2 = grid[x + 2][y + 2][0];  // Vértice derecho inferior del vecino derecho inferior
-        var yp2 = grid[x + 2][y + 2][1];
+        // Obtener el tipo de ampliación para esta celda
+        let expansionType = enlargementTypes[`${x}-${y}`];
 
-        console.log(col + "Color cambiadno?");
-        beginShape();
-        vertex(x0, y0);
-        vertex(xn2, yn2);
-        vertex(xp2, yp2);
-        vertex(xm2, ym2);
-        endShape(CLOSE);
+        if (expansionType === 'normal') {
+            if (x + 2 < grid.length && y + 2 < grid[0].length) {
+                var xn2 = grid[x + 2][y][0];
+                var yn2 = grid[x + 2][y][1];
+                var xm2 = grid[x][y + 2][0];
+                var ym2 = grid[x][y + 2][1];
+                var xp2 = grid[x + 2][y + 2][0];
+                var yp2 = grid[x + 2][y + 2][1];
+
+                beginShape();
+                vertex(x0, y0);
+                vertex(xn2, yn2);
+                vertex(xp2, yp2);
+                vertex(xm2, ym2);
+                endShape(CLOSE);
+            }
+        } else if (expansionType === 'horizontal') {
+            if (x + 2 < grid.length) {
+                var xn2 = grid[x + 3][y][0];
+                var yn2 = grid[x + 3][y][1];
+                var xm2 = grid[x][y + 2][0];
+                var ym2 = grid[x][y + 2][1];
+                var xp2 = grid[x + 3][y + 2][0];
+                var yp2 = grid[x + 3][y + 2][1];
+
+                beginShape();
+                vertex(x0, y0);
+                vertex(xn2, yn2);
+                vertex(xp2, yp2);
+                vertex(xm2, ym2);
+                endShape(CLOSE);
+            }
+        } else if (expansionType === 'vertical') {
+            if (y + 2 < grid[0].length) {
+                var xn2 = grid[x + 2][y][0];
+                var yn2 = grid[x + 2][y][1];
+                var xm2 = grid[x][y + 3][0];
+                var ym2 = grid[x][y + 3][1];
+                var xp2 = grid[x + 2][y + 3][0];
+                var yp2 = grid[x + 2][y + 3][1];
+
+                beginShape();
+                vertex(x0, y0);
+                vertex(xn2, yn2);
+                vertex(xp2, yp2);
+                vertex(xm2, ym2);
+                endShape(CLOSE);
+            }
+        }
+        else if (expansionType === 'grande') {
+            if (y + 2 < grid[0].length) {
+                var xn2 = grid[x + 3][y][0];
+                var yn2 = grid[x + 3][y][1];
+                var xm2 = grid[x][y + 3][0];
+                var ym2 = grid[x][y + 3][1];
+                var xp2 = grid[x + 3][y + 3][0];
+                var yp2 = grid[x + 3][y + 3][1];
+
+                beginShape();
+                vertex(x0, y0);
+                vertex(xn2, yn2);
+                vertex(xp2, yp2);
+                vertex(xm2, ym2);
+                endShape(CLOSE);
+            }
+        }
     } else {
         beginShape();
         vertex(x0, y0);
@@ -380,7 +458,6 @@ function drawSquare(x, y, enlarged = false, s = 0) {
         endShape(CLOSE);
     }
 }
-
 
 function mousePressed() {
     let clickedX = floor((mouseX - pad) / gridSpacingX);
@@ -404,9 +481,27 @@ function enlargeSquare(i, j) {
         }
     }
 
-    enlargedSquares.push([i, j]);
+    // Elegir aleatoriamente el tipo de expansión si no ha sido elegido antes
+    if (!enlargementTypes[`${i}-${j}`]) {
+        enlargementTypes[`${i}-${j}`] = random(['normal', 'horizontal', 'vertical', 'grande']);
+    }
+
+    let expansionType = enlargementTypes[`${i}-${j}`];
+
+    // Agregar los cuadrados agrandados a la lista
+    if (expansionType === 'normal') {
+        enlargedSquares.push([i, j]);
+    } else if (expansionType === 'horizontal') {
+        enlargedSquares.push([i, j, 'horizontal']);
+    } else if (expansionType === 'vertical') {
+        enlargedSquares.push([i, j, 'vertical']);
+    } else if (expansionType === 'grande') {
+        enlargedSquares.push([i, j, 'grande']);
+    }
+
     redrawGrid();
 }
+
 
 function redrawGrid() {
     drawGrid();
@@ -415,4 +510,8 @@ function redrawGrid() {
 function draw() {
     redrawGrid();
     actualizarMic();
+    push();
+    blendMode(MULTIPLY);
+    image(textura, 0, 0, 1000, 1000);
+    pop();
 }
