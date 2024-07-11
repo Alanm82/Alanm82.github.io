@@ -28,7 +28,7 @@ let tiempoLimite = 5000;
 let ampMin = 0.002;
 let ampMax = 0.3;
 let frecMin = 200;
-let frecMax = 1000;
+let frecMax = 500;
 let silbido = 0;
 let gestorAmp;
 const modelUrl = 'https://cdn.jsdelivr.net/gh/ml5js/ml5-data-and-models/models/pitch-detection/crepe/';
@@ -308,7 +308,7 @@ function gestosSonoros(empezo, termino) {
     if (termino) {
         let duracionSonido = millis() - tiempoInicioSonido;
         if (pitchMaximo < 0.3 || !pitchDetection) {
-            if (duracionSonido < 1000 && ampMaximo > 0.2) { // Duración máxima y amplitud mínima para considerar un aplauso
+            if (duracionSonido < 1000 && ampMaximo > 0.22) { // Duración máxima y amplitud mínima para considerar un aplauso
                 console.log("Aplauso detectado con amplitud máxima de: " + ampMaximo);
 
                 let posX = round(random(0, 15));
