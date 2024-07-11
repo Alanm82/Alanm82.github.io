@@ -44,11 +44,13 @@ function preload() {
     textura = loadImage("/imagenes/textura1.jpg");
 }
 function setup() {
-
-    reiniciar(); //ACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    createCanvas(windowWidth, windowHeight); // Cambiado a windowWidth y windowHeight para mayor claridad
+    console.log("Canvas created with dimensions:", windowWidth, windowHeight);
+    iniciarMic(); // Inicializar el micrófono aquí
+    grilla();
 }
 
-function reiniciar() {
+function grilla() {
 
     let gridAdjustment = random();
     if (gridAdjustment < 0.25) {
@@ -157,8 +159,12 @@ function reiniciar() {
         grid.push(col);
         gridColors.push(colColors);
     }
-    iniciarMic();
+   
+    console.log("Grid and colors initialized");
+
     drawGrid();
+    actualizarMic(); // Actualizar el estado del micrófono
+    console.log("Mic and Grid updated");
 }
 
 
@@ -264,18 +270,18 @@ function drawGrid() {
     }
 
 }
-
 function silencioReiniciar(iniciaSilencio) {
     if (iniciaSilencio) {
         if (tiempoSilencio === 0) {
             tiempoSilencio = millis();
             console.log("IniciaSilencio " + tiempoSilencio);
-        } else if (millis() - tiempoSilencio > 10000) {
-            //console.log("El silencio superó los 5 segundos");
-            reiniciar();
+        } else if (millis() - tiempoSilencio > 6000 && !haReiniciado) {
+            haReiniciado = true; // Evita reinicios en bucle
+            
         }
     } else {
         tiempoSilencio = 0;
+        haReiniciado = false; // Resetear la bandera cuando se detecte sonido
     }
 }
 
