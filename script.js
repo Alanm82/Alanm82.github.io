@@ -314,7 +314,7 @@ function gestosSonoros(empezo, termino) {
     if (termino) {
         let duracionSonido = millis() - tiempoInicioSonido;
         if (pitchMaximo < 0.3 || !pitchDetection) {
-            if (duracionSonido < 1000 && ampMaximo > 0.2) { // Duración máxima y amplitud mínima para considerar un aplauso
+            if (duracionSonido < 1500 && ampMaximo > 0.1) { // Duración máxima y amplitud mínima para considerar un aplauso
                 console.log("Aplauso detectado con amplitud máxima de: " + ampMaximo);
 
                 let posX = round(random(0, 15));
