@@ -27,7 +27,7 @@ let tiempoLimite = 5000;
 //MicConfig
 let ampMin = 0.002;
 let ampMax = 0.29;
-let frecMin = 200;
+let frecMin = 250;
 let frecMax = 500;
 let silbido = 0;
 let gestorAmp;
