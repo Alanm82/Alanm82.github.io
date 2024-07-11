@@ -379,12 +379,12 @@ function drawSquare(x, y, enlarged = false, s = 0) {
 
         if (expansionType === 'normal') {
             if (x + 2 < grid.length && y + 2 < grid[0].length) {
-                var xn2 = grid[Math.min(x + 2, 14)][y][0];
-                var yn2 = grid[Math.min(x + 2, 14)][y][1];
-                var xm2 = grid[x][Math.min(y + 2, 14)][0];
-                var ym2 = grid[x][Math.min(y + 2, 14)][1];
-                var xp2 = grid[Math.min(x + 2, 14)][Math.min(y + 2, 14)][0];
-                var yp2 = grid[Math.min(x + 2, 14)][Math.min(y + 2, 14)][1];
+                var xn2 = grid[Math.min(x + 2, grid.length - 1)][y][0];
+                var yn2 = grid[Math.min(x + 2, grid.length - 1)][y][1];
+                var xm2 = grid[x][Math.min(y + 2, grid[0].length - 1)][0];
+                var ym2 = grid[x][Math.min(y + 2, grid[0].length - 1)][1];
+                var xp2 = grid[Math.min(x + 2, grid.length - 1)][Math.min(y + 2, grid[0].length - 1)][0];
+                var yp2 = grid[Math.min(x + 2, grid.length - 1)][Math.min(y + 2, grid[0].length - 1)][1];
         
                 beginShape();
                 vertex(x0, y0);
@@ -395,12 +395,12 @@ function drawSquare(x, y, enlarged = false, s = 0) {
             }
         } else if (expansionType === 'horizontal') {
             if (x + 2 < grid.length) {
-                var xn2 = grid[Math.min(x + 3, 14)][y][0];
-                var yn2 = grid[Math.min(x + 3, 14)][y][1];
-                var xm2 = grid[x][Math.min(y + 2, 14)][0];
-                var ym2 = grid[x][Math.min(y + 2, 14)][1];
-                var xp2 = grid[Math.min(x + 3, 14)][Math.min(y + 2, 14)][0];
-                var yp2 = grid[Math.min(x + 3, 14)][Math.min(y + 2, 14)][1];
+                var xn2 = grid[Math.min(x + 3, grid.length - 1)][y][0];
+                var yn2 = grid[Math.min(x + 3, grid.length - 1)][y][1];
+                var xm2 = grid[x][Math.min(y + 2, grid[0].length - 1)][0];
+                var ym2 = grid[x][Math.min(y + 2, grid[0].length - 1)][1];
+                var xp2 = grid[Math.min(x + 3, grid.length - 1)][Math.min(y + 2, grid[0].length - 1)][0];
+                var yp2 = grid[Math.min(x + 3, grid.length - 1)][Math.min(y + 2, grid[0].length - 1)][1];
         
                 beginShape();
                 vertex(x0, y0);
@@ -411,12 +411,12 @@ function drawSquare(x, y, enlarged = false, s = 0) {
             }
         } else if (expansionType === 'vertical') {
             if (y + 2 < grid[0].length) {
-                var xn2 = grid[Math.min(x + 2, 14)][y][0];
-                var yn2 = grid[Math.min(x + 2, 14)][y][1];
-                var xm2 = grid[x][Math.min(y + 3, 14)][0];
-                var ym2 = grid[x][Math.min(y + 3, 14)][1];
-                var xp2 = grid[Math.min(x + 2, 14)][Math.min(y + 3, 14)][0];
-                var yp2 = grid[Math.min(x + 2, 14)][Math.min(y + 3, 14)][1];
+                var xn2 = grid[Math.min(x + 2, grid.length - 1)][y][0];
+                var yn2 = grid[Math.min(x + 2, grid.length - 1)][y][1];
+                var xm2 = grid[x][Math.min(y + 3, grid[0].length - 1)][0];
+                var ym2 = grid[x][Math.min(y + 3, grid[0].length - 1)][1];
+                var xp2 = grid[Math.min(x + 2, grid.length - 1)][Math.min(y + 3, grid[0].length - 1)][0];
+                var yp2 = grid[Math.min(x + 2, grid.length - 1)][Math.min(y + 3, grid[0].length - 1)][1];
         
                 beginShape();
                 vertex(x0, y0);
@@ -428,12 +428,12 @@ function drawSquare(x, y, enlarged = false, s = 0) {
         }
         else if (expansionType === 'grande') {
             if (x + 3 < grid.length && y + 3 < grid[0].length) {
-                var xn2 = grid[Math.min(x + 3, 14)][y][0];
-                var yn2 = grid[Math.min(x + 3, 14)][y][1];
-                var xm2 = grid[x][Math.min(y + 3, 14)][0];
-                var ym2 = grid[x][Math.min(y + 3, 14)][1];
-                var xp2 = grid[Math.min(x + 3, 14)][Math.min(y + 3, 14)][0];
-                var yp2 = grid[Math.min(x + 3, 14)][Math.min(y + 3, 14)][1];
+                var xn2 = grid[Math.min(x + 3, grid.length - 1)][y][0];
+                var yn2 = grid[Math.min(x + 3, grid.length - 1)][y][1];
+                var xm2 = grid[x][Math.min(y + 3, grid[0].length - 1)][0];
+                var ym2 = grid[x][Math.min(y + 3, grid[0].length - 1)][1];
+                var xp2 = grid[Math.min(x + 3, grid.length - 1)][Math.min(y + 3, grid[0].length - 1)][0];
+                var yp2 = grid[Math.min(x + 3, grid.length - 1)][Math.min(y + 3, grid[0].length - 1)][1];
         
                 beginShape();
                 vertex(x0, y0);
