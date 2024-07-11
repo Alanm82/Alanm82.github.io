@@ -26,7 +26,7 @@ let tiempoLimite = 5000;
 
 //MicConfig
 let ampMin = 0.002;
-let ampMax = 0.3;
+let ampMax = 0.29;
 let frecMin = 200;
 let frecMax = 500;
 let silbido = 0;
@@ -308,7 +308,7 @@ function gestosSonoros(empezo, termino) {
     if (termino) {
         let duracionSonido = millis() - tiempoInicioSonido;
         if (pitchMaximo < 0.3 || !pitchDetection) {
-            if (duracionSonido < 1000 && ampMaximo > 0.22) { // Duración máxima y amplitud mínima para considerar un aplauso
+            if (duracionSonido < 1000 && ampMaximo > 0.2) { // Duración máxima y amplitud mínima para considerar un aplauso
                 console.log("Aplauso detectado con amplitud máxima de: " + ampMaximo);
 
                 let posX = round(random(0, 15));
@@ -379,13 +379,13 @@ function drawSquare(x, y, enlarged = false, s = 0) {
 
         if (expansionType === 'normal') {
             if (x + 2 < grid.length && y + 2 < grid[0].length) {
-                var xn2 = grid[x + 2][y][0];
-                var yn2 = grid[x + 2][y][1];
-                var xm2 = grid[x][y + 2][0];
-                var ym2 = grid[x][y + 2][1];
-                var xp2 = grid[x + 2][y + 2][0];
-                var yp2 = grid[x + 2][y + 2][1];
-
+                var xn2 = grid[Math.min(x + 2, 14)][y][0];
+                var yn2 = grid[Math.min(x + 2, 14)][y][1];
+                var xm2 = grid[x][Math.min(y + 2, 14)][0];
+                var ym2 = grid[x][Math.min(y + 2, 14)][1];
+                var xp2 = grid[Math.min(x + 2, 14)][Math.min(y + 2, 14)][0];
+                var yp2 = grid[Math.min(x + 2, 14)][Math.min(y + 2, 14)][1];
+        
                 beginShape();
                 vertex(x0, y0);
                 vertex(xn2, yn2);
@@ -395,13 +395,13 @@ function drawSquare(x, y, enlarged = false, s = 0) {
             }
         } else if (expansionType === 'horizontal') {
             if (x + 2 < grid.length) {
-                var xn2 = grid[x + 3][y][0];
-                var yn2 = grid[x + 3][y][1];
-                var xm2 = grid[x][y + 2][0];
-                var ym2 = grid[x][y + 2][1];
-                var xp2 = grid[x + 3][y + 2][0];
-                var yp2 = grid[x + 3][y + 2][1];
-
+                var xn2 = grid[Math.min(x + 3, 14)][y][0];
+                var yn2 = grid[Math.min(x + 3, 14)][y][1];
+                var xm2 = grid[x][Math.min(y + 2, 14)][0];
+                var ym2 = grid[x][Math.min(y + 2, 14)][1];
+                var xp2 = grid[Math.min(x + 3, 14)][Math.min(y + 2, 14)][0];
+                var yp2 = grid[Math.min(x + 3, 14)][Math.min(y + 2, 14)][1];
+        
                 beginShape();
                 vertex(x0, y0);
                 vertex(xn2, yn2);
@@ -411,13 +411,13 @@ function drawSquare(x, y, enlarged = false, s = 0) {
             }
         } else if (expansionType === 'vertical') {
             if (y + 2 < grid[0].length) {
-                var xn2 = grid[x + 2][y][0];
-                var yn2 = grid[x + 2][y][1];
-                var xm2 = grid[x][y + 3][0];
-                var ym2 = grid[x][y + 3][1];
-                var xp2 = grid[x + 2][y + 3][0];
-                var yp2 = grid[x + 2][y + 3][1];
-
+                var xn2 = grid[Math.min(x + 2, 14)][y][0];
+                var yn2 = grid[Math.min(x + 2, 14)][y][1];
+                var xm2 = grid[x][Math.min(y + 3, 14)][0];
+                var ym2 = grid[x][Math.min(y + 3, 14)][1];
+                var xp2 = grid[Math.min(x + 2, 14)][Math.min(y + 3, 14)][0];
+                var yp2 = grid[Math.min(x + 2, 14)][Math.min(y + 3, 14)][1];
+        
                 beginShape();
                 vertex(x0, y0);
                 vertex(xn2, yn2);
@@ -427,14 +427,14 @@ function drawSquare(x, y, enlarged = false, s = 0) {
             }
         }
         else if (expansionType === 'grande') {
-            if (y + 2 < grid[0].length) {
-                var xn2 = grid[x + 3][y][0];
-                var yn2 = grid[x + 3][y][1];
-                var xm2 = grid[x][y + 3][0];
-                var ym2 = grid[x][y + 3][1];
-                var xp2 = grid[x + 3][y + 3][0];
-                var yp2 = grid[x + 3][y + 3][1];
-
+            if (x + 3 < grid.length && y + 3 < grid[0].length) {
+                var xn2 = grid[Math.min(x + 3, 14)][y][0];
+                var yn2 = grid[Math.min(x + 3, 14)][y][1];
+                var xm2 = grid[x][Math.min(y + 3, 14)][0];
+                var ym2 = grid[x][Math.min(y + 3, 14)][1];
+                var xp2 = grid[Math.min(x + 3, 14)][Math.min(y + 3, 14)][0];
+                var yp2 = grid[Math.min(x + 3, 14)][Math.min(y + 3, 14)][1];
+        
                 beginShape();
                 vertex(x0, y0);
                 vertex(xn2, yn2);
