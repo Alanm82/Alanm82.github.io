@@ -1,4 +1,4 @@
-class Expectativa {
+class Empatia {
 constructor() {
 
     this.personas = [];
