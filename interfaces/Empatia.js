@@ -1,5 +1,7 @@
+```javascript
 class Empatia {
-constructor() {
+
+  constructor() {
 
     this.personas = [];
 
@@ -17,7 +19,6 @@ constructor() {
       );
 
     }
-
   }
 
 
@@ -28,9 +29,7 @@ constructor() {
     // =========================
 
     for (let persona of this.personas) {
-
       persona.actualizar();
-
     }
 
 
@@ -44,7 +43,6 @@ constructor() {
         continue;
       }
 
-
       let cantidadAyuda = 0;
 
 
@@ -55,8 +53,7 @@ constructor() {
           continue;
         }
 
-
-        // Solo los azules ayudan
+        // Los rojos no ayudan
         if (ayudante.afectado) {
           continue;
         }
@@ -78,24 +75,18 @@ constructor() {
 
           cantidadAyuda++;
 
-          // Se acerca CONSTANTEMENTE
           ayudante.acercarse(
             afectado.x,
             afectado.y
           );
 
         }
-
       }
 
 
       // =========================
       // RECUPERACIÓN
       // =========================
-
-      // Solamente empieza a recuperarse
-      // cuando al menos un azul está
-      // realmente tocándolo.
 
       let estaSiendoAyudado = false;
 
@@ -127,11 +118,9 @@ constructor() {
         ) {
 
           estaSiendoAyudado = true;
-
           break;
 
         }
-
       }
 
 
@@ -145,12 +134,11 @@ constructor() {
           0.015
         );
 
-        velocidadRecuperacion =
-          constrain(
-            velocidadRecuperacion,
-            0.002,
-            0.015
-          );
+        velocidadRecuperacion = constrain(
+          velocidadRecuperacion,
+          0.002,
+          0.015
+        );
 
 
         afectado.recuperar(
@@ -158,9 +146,7 @@ constructor() {
         );
 
       }
-
     }
-
   }
 
 
@@ -199,9 +185,6 @@ constructor() {
         );
 
 
-        // Línea solamente mientras
-        // el azul está cerca.
-
         if (distancia < 180) {
 
           let alpha = map(
@@ -213,11 +196,7 @@ constructor() {
           );
 
 
-          stroke(
-            255,
-            alpha
-          );
-
+          stroke(255, alpha);
           strokeWeight(1.5);
 
 
@@ -229,9 +208,7 @@ constructor() {
           );
 
         }
-
       }
-
     }
 
 
@@ -240,11 +217,8 @@ constructor() {
     // =========================
 
     for (let persona of this.personas) {
-
       persona.dibujar();
-
     }
-
   }
 
 
@@ -278,7 +252,6 @@ constructor() {
     }
 
     return false;
-
   }
 
 
@@ -288,64 +261,71 @@ constructor() {
 
   intentarAfectar(x, y) {
 
-  let objetivo = null;
+    let objetivo = null;
 
-  for (let persona of this.personas) {
 
-    let distancia = dist(
-      x,
-      y,
-      persona.x,
-      persona.y
+    for (let persona of this.personas) {
+
+      let distancia = dist(
+        x,
+        y,
+        persona.x,
+        persona.y
+      );
+
+
+      if (
+        distancia <
+        persona.radio + 20
+      ) {
+
+        objetivo = persona;
+        break;
+
+      }
+    }
+
+
+    if (objetivo === null) {
+      return;
+    }
+
+
+    if (objetivo.afectado) {
+      return;
+    }
+
+
+    // =========================
+    // CONTAR AZULES
+    // =========================
+
+    let cantidadAzules = 0;
+
+
+    for (let persona of this.personas) {
+
+      if (!persona.afectado) {
+        cantidadAzules++;
+      }
+
+    }
+
+
+    // Siempre dejamos uno azul
+    if (cantidadAzules <= 1) {
+      return;
+    }
+
+
+    // Se vuelve rojo
+    objetivo.afectar(
+      this.colorAyuda
     );
 
-    if (
-      distancia <
-      persona.radio + 20
-    ) {
-
-      objetivo = persona;
-      break;
-
-    }
-
   }
-
-  if (objetivo === null) {
-    return;
-  }
-
-  if (objetivo.afectado) {
-    return;
-  }
-
-
-  // Contar azules
-  let cantidadAzules = 0;
-
-  for (let persona of this.personas) {
-
-    if (!persona.afectado) {
-      cantidadAzules++;
-    }
-
-  }
-
-
-  // Siempre dejamos uno azul
-  if (cantidadAzules <= 1) {
-    return;
-  }
-
-
-  // Se vuelve rojo
-  objetivo.afectar(
-    this.colorAyuda
-  );
-
 }
 
-}
 
 
 class PersonaEmpatia {
@@ -366,11 +346,8 @@ class PersonaEmpatia {
     // COLOR
     // =========================
 
-    this.colorOriginal =
-      colorInicial;
-
-    this.colorActual =
-      colorInicial;
+    this.colorOriginal = colorInicial;
+    this.colorActual = colorInicial;
 
 
     // =========================
@@ -380,8 +357,14 @@ class PersonaEmpatia {
     this.direccion =
       p5.Vector.random2D();
 
-    this.velocidad =
+    this.velocidadBase =
       random(0.3, 0.8);
+
+    this.velocidad =
+      this.velocidadBase;
+
+    this.velocidadObjetivo =
+      this.velocidadBase;
 
 
     // =========================
@@ -391,10 +374,6 @@ class PersonaEmpatia {
     this.afectado = false;
 
     this.retorno = 0;
-    this.velocidadBase = random(0.3, 0.8);
-
-this.velocidad = this.velocidadBase;
-this.velocidadObjetivo = this.velocidadBase;
   }
 
 
@@ -404,40 +383,46 @@ this.velocidadObjetivo = this.velocidadBase;
 
   actualizar() {
 
-  // Los círculos rojos permanecen quietos
-  if (this.afectado) {
-    return;
-  }
+    // Los círculos rojos permanecen quietos
+    if (this.afectado) {
+      return;
+    }
 
-  // La velocidad actual se acerca
-  // progresivamente a la velocidad objetivo
-  this.velocidad = lerp(
-    this.velocidad,
-    this.velocidadObjetivo,
-    0.03
-  );
 
-  // Movimiento
-  this.x +=
-    this.direccion.x *
-    this.velocidad;
+    // La velocidad se acerca
+    // progresivamente al objetivo
 
-  this.y +=
-    this.direccion.y *
-    this.velocidad;
-
-  // Pequeños cambios de dirección
-  if (random() < 0.01) {
-
-    this.direccion.rotate(
-      random(-0.4, 0.4)
+    this.velocidad = lerp(
+      this.velocidad,
+      this.velocidadObjetivo,
+      0.03
     );
 
+
+    // Movimiento
+
+    this.x +=
+      this.direccion.x *
+      this.velocidad;
+
+    this.y +=
+      this.direccion.y *
+      this.velocidad;
+
+
+    // Pequeños cambios de dirección
+
+    if (random() < 0.01) {
+
+      this.direccion.rotate(
+        random(-0.4, 0.4)
+      );
+
+    }
+
+
+    this.chequearPantalla();
   }
-
-  this.chequearPantalla();
-
-}
 
 
   // =========================
@@ -446,37 +431,45 @@ this.velocidadObjetivo = this.velocidadBase;
 
   acercarse(x, y) {
 
-  let objetivo = createVector(x, y);
+    let objetivo =
+      createVector(x, y);
 
-  let posicion = createVector(
-    this.x,
-    this.y
-  );
+    let posicion =
+      createVector(
+        this.x,
+        this.y
+      );
 
-  let direccion = p5.Vector.sub(
-    objetivo,
-    posicion
-  );
 
-  if (direccion.mag() > 1) {
+    let direccion =
+      p5.Vector.sub(
+        objetivo,
+        posicion
+      );
 
-    direccion.normalize();
 
-    // Cambia de dirección suavemente
-    this.direccion.lerp(
-      direccion,
-      0.025
-    );
+    if (direccion.mag() > 1) {
 
-    this.direccion.normalize();
+      direccion.normalize();
 
-    // En vez de aumentar la velocidad
-    // de golpe, establecemos un objetivo
-    this.velocidadObjetivo = 1.2;
 
+      // Cambio suave de dirección
+
+      this.direccion.lerp(
+        direccion,
+        0.025
+      );
+
+      this.direccion.normalize();
+
+
+      // Aumenta la velocidad suavemente
+
+      this.velocidadObjetivo =
+        1.2;
+
+    }
   }
-
-}
 
 
   // =========================
@@ -491,7 +484,6 @@ this.velocidadObjetivo = this.velocidadBase;
 
     this.colorActual =
       colorNuevo;
-
   }
 
 
@@ -514,6 +506,7 @@ this.velocidadObjetivo = this.velocidadBase;
 
 
     // Rojo → azul
+
     this.colorActual =
       lerpColor(
         color(255, 60, 60),
@@ -523,14 +516,12 @@ this.velocidadObjetivo = this.velocidadBase;
 
 
     // Recuperación completa
-    if (
-      this.retorno >= 1
-    ) {
+
+    if (this.retorno >= 1) {
 
       this.terminarAyuda();
 
     }
-
   }
 
 
@@ -540,25 +531,28 @@ this.velocidadObjetivo = this.velocidadBase;
 
   terminarAyuda() {
 
-  this.afectado = false;
+    this.afectado = false;
 
-  this.retorno = 1;
+    this.retorno = 1;
 
-  this.colorActual =
-    this.colorOriginal;
+    this.colorActual =
+      this.colorOriginal;
 
-  // Nueva dirección
-  this.direccion =
-    p5.Vector.random2D();
 
-  this.direccion.normalize();
+    // Nueva dirección
 
-  // Vuelve progresivamente
-  // a su velocidad normal
-  this.velocidadObjetivo =
-    this.velocidadBase;
+    this.direccion =
+      p5.Vector.random2D();
 
-}
+    this.direccion.normalize();
+
+
+    // Vuelve progresivamente
+    // a su velocidad normal
+
+    this.velocidadObjetivo =
+      this.velocidadBase;
+  }
 
 
   // =========================
@@ -598,7 +592,6 @@ this.velocidadObjetivo = this.velocidadBase;
       this.radio,
       height - this.radio
     );
-
   }
 
 
@@ -609,6 +602,7 @@ this.velocidadObjetivo = this.velocidadBase;
   dibujar() {
 
     // Aura
+
     noStroke();
 
     fill(
@@ -618,6 +612,7 @@ this.velocidadObjetivo = this.velocidadBase;
       35
     );
 
+
     circle(
       this.x,
       this.y,
@@ -626,9 +621,11 @@ this.velocidadObjetivo = this.velocidadBase;
 
 
     // Círculo
+
     fill(
       this.colorActual
     );
+
 
     circle(
       this.x,
@@ -638,6 +635,7 @@ this.velocidadObjetivo = this.velocidadBase;
 
 
     // Contorno
+
     noFill();
 
     stroke(
@@ -646,14 +644,92 @@ this.velocidadObjetivo = this.velocidadBase;
 
     strokeWeight(2);
 
+
     circle(
       this.x,
       this.y,
       this.radio * 2
     );
-
   }
+}
+```
+
+### 2. Y en tu `sketch.js` necesitás esto
+
+Esto es **lo que probablemente te falta** si antes funcionaba con `Expectativa`.
+
+```javascript
+let empatia;
+
+function setup() {
+
+  createCanvas(
+    windowWidth,
+    windowHeight
+  );
+
+  empatia = new Empatia();
+}
+
+
+function draw() {
+
+  empatia.actualizar();
+  empatia.dibujar();
 
 }
+
+
+function mousePressed() {
+
+  empatia.mousePressed();
+
+}
+
+
+function touchStarted() {
+
+  return empatia.touchStarted();
+
+}
+
+
+function windowResized() {
+
+  resizeCanvas(
+    windowWidth,
+    windowHeight
+  );
+
+}
+```
+
+**Ojo con esto:** si en tu `sketch.js` tenías algo como:
+
+```js
+let expectativa = new Expectativa();
+```
+
+tenés que cambiarlo por:
+
+```js
+let empatia = new Empatia();
+```
+
+y donde decía:
+
+```js
+expectativa.actualizar();
+expectativa.dibujar();
+```
+
+poner:
+
+```js
+empatia.actualizar();
+empatia.dibujar();
+```
+
+La lógica queda: **azules se mueven → tocás uno → se pone rojo y queda quieto → los azules dentro de 180 px se acercan → cuando uno lo toca empieza la recuperación → vuelve a azul → continúa moviéndose.**
 
 
