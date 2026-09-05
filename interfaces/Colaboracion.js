@@ -1,1359 +1,658 @@
 class Colaboracion {
 
-    constructor() {
+constructor() {
 
-        this.grupos = [];
-        this.figurasAisladas = [];
-        this.figuraArrastrada = null;
+    this.personas = [];
 
-        this.iniciarSistema();
+    this.colorGrupo = color(80, 180, 255);
+    this.colorAyuda = color(255, 60, 60);
+
+    for (let i = 0; i < 45; i++) {
+
+      this.personas.push(
+        new PersonaEmpatia(
+          random(30, width - 30),
+          random(30, height - 30),
+          this.colorGrupo
+        )
+      );
+
+    }
+
+  }
+
+
+  actualizar() {
+
+    // =========================
+    // MOVIMIENTO NORMAL
+    // =========================
+
+    for (let persona of this.personas) {
+
+      persona.actualizar();
+
     }
 
 
-    iniciarSistema() {
+    // =========================
+    // AYUDA
+    // =========================
 
-        // =========================================
-        // TRIÁNGULOS
-        // =========================================
+    for (let afectado of this.personas) {
 
-        let triangulos = new Grupo(
-            "triangulo",
-            width * 0.25,
-            height * 0.30
+      if (!afectado.afectado) {
+        continue;
+      }
+
+
+      let cantidadAyuda = 0;
+
+
+      for (let ayudante of this.personas) {
+
+        // No puede ayudarse a sí mismo
+        if (ayudante === afectado) {
+          continue;
+        }
+
+
+        // Solo los azules ayudan
+        if (ayudante.afectado) {
+          continue;
+        }
+
+
+        let distancia = dist(
+          ayudante.x,
+          ayudante.y,
+          afectado.x,
+          afectado.y
         );
 
-        // =========================================
-        // CUADRADOS
-        // =========================================
 
-        let cuadrados = new Grupo(
-            "cuadrado",
-            width * 0.70,
-            height * 0.35
+        // =========================
+        // CÍRCULO CERCANO
+        // =========================
+
+        if (distancia < 180) {
+
+          cantidadAyuda++;
+
+          // Se acerca CONSTANTEMENTE
+          ayudante.acercarse(
+            afectado.x,
+            afectado.y
+          );
+
+        }
+
+      }
+
+
+      // =========================
+      // RECUPERACIÓN
+      // =========================
+
+      // Solamente empieza a recuperarse
+      // cuando al menos un azul está
+      // realmente tocándolo.
+
+      let estaSiendoAyudado = false;
+
+
+      for (let ayudante of this.personas) {
+
+        if (ayudante === afectado) {
+          continue;
+        }
+
+        if (ayudante.afectado) {
+          continue;
+        }
+
+
+        let distancia = dist(
+          ayudante.x,
+          ayudante.y,
+          afectado.x,
+          afectado.y
         );
 
-        // =========================================
-        // CÍRCULOS
-        // =========================================
-
-        let circulos = new Grupo(
-            "circulo",
-            width * 0.45,
-            height * 0.70
-        );
-
-
-        // =========================================
-        // CANTIDAD DE FIGURAS
-        // =========================================
-
-        for (let i = 0; i < 8; i++) {
-
-            triangulos.agregarFigura(
-                new Figura(
-                    "triangulo",
-                    triangulos.pos.x,
-                    triangulos.pos.y
-                )
-            );
-
-
-            cuadrados.agregarFigura(
-                new Figura(
-                    "cuadrado",
-                    cuadrados.pos.x,
-                    cuadrados.pos.y
-                )
-            );
-
-
-            circulos.agregarFigura(
-                new Figura(
-                    "circulo",
-                    circulos.pos.x,
-                    circulos.pos.y
-                )
-            );
-        }
-
-
-        this.grupos.push(triangulos);
-        this.grupos.push(cuadrados);
-        this.grupos.push(circulos);
-    }
-
-
-    // =====================================================
-    // ACTUALIZAR
-    // =====================================================
-
-    actualizar() {
-
-        // =========================================
-        // ACTUALIZAR GRUPOS
-        // =========================================
-
-        for (let grupo of this.grupos) {
-
-            grupo.actualizar();
-        }
-
-
-        // =========================================
-        // FIGURAS AISLADAS
-        // =========================================
-
-        for (
-            let i = this.figurasAisladas.length - 1;
-            i >= 0;
-            i--
-        ) {
-
-            let figura =
-                this.figurasAisladas[i];
-
-
-            // Mientras el usuario la arrastra
-            // no puede reincorporarse.
-
-            if (
-                figura ===
-                this.figuraArrastrada
-            ) {
-
-                continue;
-            }
-
-
-            let grupo =
-                this.buscarGrupoCercano(
-                    figura
-                );
-
-
-            if (grupo !== null) {
-
-                figura.reincorporando = true;
-
-
-                let objetivo =
-                    grupo.pos.copy();
-
-
-                let direccion =
-                    p5.Vector.sub(
-                        objetivo,
-                        figura.pos
-                    );
-
-
-                let distancia =
-                    direccion.mag();
-
-
-                // =====================================
-                // MOVIMIENTO HACIA EL GRUPO
-                // =====================================
-
-                if (distancia > 45) {
-
-                    direccion.normalize();
-
-
-                    // Aceleración hacia el grupo
-
-                    direccion.mult(0.22);
-
-
-                    figura.vel.add(
-                        direccion
-                    );
-
-
-                    figura.vel.limit(
-                        4.5
-                    );
-
-
-                    figura.pos.add(
-                        figura.vel
-                    );
-                }
-
-
-                // =====================================
-                // INCORPORACIÓN
-                // =====================================
-
-                else {
-
-                    grupo.reincorporar(
-                        figura
-                    );
-
-
-                    this.figurasAisladas.splice(
-                        i,
-                        1
-                    );
-                }
-
-            } else {
-
-                figura.reincorporando = false;
-
-                // La figura permanece quieta
-                // hasta que un grupo se acerque.
-
-                figura.vel.set(
-                    0,
-                    0
-                );
-            }
-        }
-    }
-
-
-    // =====================================================
-    // DIBUJAR
-    // =====================================================
-
-    dibujar() {
-
-        background(20);
-
-
-        // Dibujar grupos
-
-        for (let grupo of this.grupos) {
-
-            grupo.dibujar();
-        }
-
-
-        // Dibujar figuras aisladas
-
-        for (
-            let figura of this.figurasAisladas
-        ) {
-
-            figura.dibujar();
-        }
-    }
-
-
-    // =====================================================
-    // BUSCAR GRUPO CERCANO
-    // =====================================================
-
-    buscarGrupoCercano(figura) {
-
-        let distanciaMinima = 220;
-
-        let grupoCercano = null;
-
-
-        for (let grupo of this.grupos) {
-
-            let distancia =
-                dist(
-                    figura.pos.x,
-                    figura.pos.y,
-                    grupo.pos.x,
-                    grupo.pos.y
-                );
-
-
-            if (
-                distancia <
-                distanciaMinima
-            ) {
-
-                distanciaMinima =
-                    distancia;
-
-                grupoCercano =
-                    grupo;
-            }
-        }
-
-
-        return grupoCercano;
-    }
-
-
-    // =====================================================
-    // BUSCAR FIGURA
-    // =====================================================
-
-    buscarFigura(x, y) {
-
-        // =========================================
-        // FIGURAS DE LOS GRUPOS
-        // =========================================
-
-        for (let grupo of this.grupos) {
-
-            for (
-                let i =
-                    grupo.figuras.length - 1;
-                i >= 0;
-                i--
-            ) {
-
-                let figura =
-                    grupo.figuras[i];
-
-
-                if (
-                    figura.contiene(
-                        x,
-                        y
-                    )
-                ) {
-
-                    return figura;
-                }
-            }
-        }
-
-
-        // =========================================
-        // FIGURAS AISLADAS
-        // =========================================
-
-        for (
-            let i =
-                this.figurasAisladas.length - 1;
-            i >= 0;
-            i--
-        ) {
-
-            let figura =
-                this.figurasAisladas[i];
-
-
-            if (
-                figura.contiene(
-                    x,
-                    y
-                )
-            ) {
-
-                return figura;
-            }
-        }
-
-
-        return null;
-    }
-
-
-    // =====================================================
-    // SEPARAR FIGURA
-    // =====================================================
-
-    separarFigura(figura) {
-
-        // Si ya está aislada,
-        // no hacer nada.
 
         if (
-            this.figurasAisladas.includes(
-                figura
-            )
+          distancia <
+          ayudante.radio +
+          afectado.radio +
+          5
         ) {
 
-            return;
+          estaSiendoAyudado = true;
+
+          break;
+
+        }
+
+      }
+
+
+      if (estaSiendoAyudado) {
+
+        let velocidadRecuperacion = map(
+          cantidadAyuda,
+          1,
+          10,
+          0.002,
+          0.015
+        );
+
+        velocidadRecuperacion =
+          constrain(
+            velocidadRecuperacion,
+            0.002,
+            0.015
+          );
+
+
+        afectado.recuperar(
+          velocidadRecuperacion
+        );
+
+      }
+
+    }
+
+  }
+
+
+  dibujar() {
+
+    background(20);
+
+
+    // =========================
+    // LÍNEAS DE AYUDA
+    // =========================
+
+    for (let afectado of this.personas) {
+
+      if (!afectado.afectado) {
+        continue;
+      }
+
+
+      for (let ayudante of this.personas) {
+
+        if (ayudante === afectado) {
+          continue;
+        }
+
+        if (ayudante.afectado) {
+          continue;
         }
 
 
-        // Sacarla del grupo
-
-        if (
-            figura.grupo !== null
-        ) {
-
-            figura.grupo.separar(
-                figura
-            );
-        }
+        let distancia = dist(
+          ayudante.x,
+          ayudante.y,
+          afectado.x,
+          afectado.y
+        );
 
 
-        figura.grupo = null;
+        // Línea solamente mientras
+        // el azul está cerca.
 
-        figura.offset = null;
+        if (distancia < 180) {
 
-        figura.vel.set(
+          let alpha = map(
+            distancia,
             0,
+            180,
+            140,
             0
-        );
-
-        figura.reincorporando =
-            false;
+          );
 
 
-        this.figurasAisladas.push(
-            figura
-        );
+          stroke(
+            255,
+            alpha
+          );
+
+          strokeWeight(1.5);
+
+
+          line(
+            ayudante.x,
+            ayudante.y,
+            afectado.x,
+            afectado.y
+          );
+
+        }
+
+      }
+
     }
 
 
-    // =====================================================
-    // MOUSE
-    // =====================================================
+    // =========================
+    // CÍRCULOS
+    // =========================
 
-    mousePressed() {
+    for (let persona of this.personas) {
 
-        let figura =
-            this.buscarFigura(
-                mouseX,
-                mouseY
-            );
+      persona.dibujar();
 
-
-        if (
-            figura !== null
-        ) {
-
-            this.separarFigura(
-                figura
-            );
-
-
-            this.figuraArrastrada =
-                figura;
-        }
     }
 
-
-    mouseDragged() {
-
-        if (
-            this.figuraArrastrada !== null
-        ) {
-
-            this.figuraArrastrada.pos.x =
-                mouseX;
-
-            this.figuraArrastrada.pos.y =
-                mouseY;
+  }
 
 
-            this.figuraArrastrada.vel.set(
-                0,
-                0
-            );
-        }
+  // =========================
+  // COMPUTADORA
+  // =========================
+
+  mousePressed() {
+
+    this.intentarAfectar(
+      mouseX,
+      mouseY
+    );
+
+  }
+
+
+  // =========================
+  // CELULAR
+  // =========================
+
+  touchStarted() {
+
+    for (let i = 0; i < touches.length; i++) {
+
+      this.intentarAfectar(
+        touches[i].x,
+        touches[i].y
+      );
+
     }
 
+    return false;
 
-    mouseReleased() {
-
-        if (
-            this.figuraArrastrada !== null
-        ) {
-
-            this.figuraArrastrada.vel.set(
-                0,
-                0
-            );
+  }
 
 
-            this.figuraArrastrada =
-                null;
-        }
+  // =========================
+  // INTENTAR AFECTAR
+  // =========================
+
+  intentarAfectar(x, y) {
+
+  let objetivo = null;
+
+  for (let persona of this.personas) {
+
+    let distancia = dist(
+      x,
+      y,
+      persona.x,
+      persona.y
+    );
+
+    if (
+      distancia <
+      persona.radio + 20
+    ) {
+
+      objetivo = persona;
+      break;
+
     }
 
+  }
 
-    // =====================================================
-    // TOUCH
-    // =====================================================
+  if (objetivo === null) {
+    return;
+  }
 
-    touchStarted() {
-
-        if (
-            touches.length === 0
-        ) {
-
-            return false;
-        }
+  if (objetivo.afectado) {
+    return;
+  }
 
 
-        let toque =
-            touches[0];
+  // Contar azules
+  let cantidadAzules = 0;
 
+  for (let persona of this.personas) {
 
-        let figura =
-            this.buscarFigura(
-                toque.x,
-                toque.y
-            );
-
-
-        if (
-            figura !== null
-        ) {
-
-            this.separarFigura(
-                figura
-            );
-
-
-            this.figuraArrastrada =
-                figura;
-        }
-
-
-        return false;
+    if (!persona.afectado) {
+      cantidadAzules++;
     }
 
-
-    touchMoved() {
-
-        if (
-            this.figuraArrastrada !== null &&
-            touches.length > 0
-        ) {
-
-            let toque =
-                touches[0];
+  }
 
 
-            this.figuraArrastrada.pos.x =
-                toque.x;
-
-            this.figuraArrastrada.pos.y =
-                toque.y;
-
-
-            this.figuraArrastrada.vel.set(
-                0,
-                0
-            );
-        }
+  // Siempre dejamos uno azul
+  if (cantidadAzules <= 1) {
+    return;
+  }
 
 
-        return false;
-    }
+  // Se vuelve rojo
+  objetivo.afectar(
+    this.colorAyuda
+  );
 
+}
 
-    touchEnded() {
-
-        if (
-            this.figuraArrastrada !== null
-        ) {
-
-            this.figuraArrastrada.vel.set(
-                0,
-                0
-            );
-
-
-            this.figuraArrastrada =
-                null;
-        }
-
-
-        return false;
-    }
 }
 
 
+class PersonaEmpatia {
 
-// =====================================================
-// GRUPO
-// =====================================================
+  constructor(
+    x,
+    y,
+    colorInicial
+  ) {
 
-class Grupo {
+    this.x = x;
+    this.y = y;
 
-    constructor(
-        tipo,
-        x,
-        y
-    ) {
+    this.radio = random(12, 20);
 
-        this.tipo =
-            tipo;
 
+    // =========================
+    // COLOR
+    // =========================
 
-        this.pos =
-            createVector(
-                x,
-                y
-            );
+    this.colorOriginal =
+      colorInicial;
 
+    this.colorActual =
+      colorInicial;
 
-        // =========================================
-        // VELOCIDAD INICIAL
-        // =========================================
 
-        this.vel =
-            p5.Vector.random2D();
+    // =========================
+    // MOVIMIENTO
+    // =========================
 
+    this.direccion =
+      p5.Vector.random2D();
 
-        this.vel.setMag(
-            random(
-                1.5,
-                2.4
-            )
-        );
+    this.velocidad =
+      random(0.3, 0.8);
 
 
-        this.direccion =
-            this.vel.copy();
+    // =========================
+    // ESTADO
+    // =========================
 
+    this.afectado = false;
 
-        this.figuras = [];
+    this.retorno = 0;
+    this.velocidadBase = random(0.3, 0.8);
 
+this.velocidad = this.velocidadBase;
+this.velocidadObjetivo = this.velocidadBase;
+  }
 
-        // Radio de distribución
-        // de las figuras
 
-        this.radio =
-            140;
+  // =========================
+  // ACTUALIZAR
+  // =========================
 
+  actualizar() {
 
-        // Semilla independiente
-        // para el movimiento
+  // Los círculos rojos permanecen quietos
+  if (this.afectado) {
+    return;
+  }
 
-        this.ruido =
-            random(10000);
-    }
+  // La velocidad actual se acerca
+  // progresivamente a la velocidad objetivo
+  this.velocidad = lerp(
+    this.velocidad,
+    this.velocidadObjetivo,
+    0.03
+  );
 
+  // Movimiento
+  this.x +=
+    this.direccion.x *
+    this.velocidad;
 
-    // =====================================================
-    // AGREGAR FIGURA
-    // =====================================================
+  this.y +=
+    this.direccion.y *
+    this.velocidad;
 
-    agregarFigura(figura) {
+  // Pequeños cambios de dirección
+  if (random() < 0.01) {
 
-        figura.grupo =
-            this;
+    this.direccion.rotate(
+      random(-0.4, 0.4)
+    );
 
+  }
 
-        figura.offset =
-            p5.Vector.random2D();
+  this.chequearPantalla();
 
-
-        figura.offset.mult(
-            random(
-                35,
-                this.radio
-            )
-        );
-
-
-        this.figuras.push(
-            figura
-        );
-
-
-        this.actualizarPosicionFigura(
-            figura
-        );
-    }
-
-
-    // =====================================================
-    // ACTUALIZAR GRUPO
-    // =====================================================
-
-    actualizar() {
-
-        // =========================================
-        // CAMBIO SUAVE DE DIRECCIÓN
-        // =========================================
-
-        let variacion =
-            noise(
-                this.ruido,
-                frameCount * 0.001
-            );
-
-
-        let giro =
-            map(
-                variacion,
-                0,
-                1,
-                -0.025,
-                0.025
-            );
-
-
-        this.vel.rotate(
-            giro
-        );
-
-
-        // =========================================
-        // VELOCIDAD MÍNIMA
-        // =========================================
-
-        if (
-            this.vel.mag() < 1.5
-        ) {
-
-            this.vel.setMag(
-                1.5
-            );
-        }
-
-
-        // =========================================
-        // VELOCIDAD MÁXIMA
-        // =========================================
-
-        this.vel.limit(
-            3.8
-        );
-
-
-        // =========================================
-        // MOVIMIENTO
-        // =========================================
-
-        this.pos.add(
-            this.vel
-        );
-
-
-        this.direccion =
-            this.vel.copy();
-
-
-        // =========================================
-        // BORDES
-        // =========================================
-        //
-        // Rebote físico.
-        // NO hay teletransportación.
-
-        let margen =
-            this.radio;
-
-
-        if (
-            this.pos.x <
-            margen
-        ) {
-
-            this.pos.x =
-                margen;
-
-
-            this.vel.x =
-                abs(
-                    this.vel.x
-                );
-        }
-
-
-        if (
-            this.pos.x >
-            width - margen
-        ) {
-
-            this.pos.x =
-                width - margen;
-
-
-            this.vel.x =
-                -abs(
-                    this.vel.x
-                );
-        }
-
-
-        if (
-            this.pos.y <
-            margen
-        ) {
-
-            this.pos.y =
-                margen;
-
-
-            this.vel.y =
-                abs(
-                    this.vel.y
-                );
-        }
-
-
-        if (
-            this.pos.y >
-            height - margen
-        ) {
-
-            this.pos.y =
-                height - margen;
-
-
-            this.vel.y =
-                -abs(
-                    this.vel.y
-                );
-        }
-
-
-        // =========================================
-        // MOVIMIENTO DE LAS FIGURAS
-        // =========================================
-
-        for (
-            let figura of this.figuras
-        ) {
-
-            // Rotación lenta del sistema
-
-            figura.offset.rotate(
-                0.002
-            );
-
-
-            this.actualizarPosicionFigura(
-                figura
-            );
-        }
-    }
-
-
-    // =====================================================
-    // POSICIÓN DE FIGURAS
-    // =====================================================
-
-    actualizarPosicionFigura(
-        figura
-    ) {
-
-        let objetivo =
-            p5.Vector.add(
-                this.pos,
-                figura.offset
-            );
-
-
-        // Las figuras siguen al grupo
-        // con mayor respuesta.
-
-        figura.pos.lerp(
-            objetivo,
-            0.12
-        );
-
-
-        // Dirección colectiva
-
-        figura.vel.lerp(
-            this.vel,
-            0.08
-        );
-    }
-
-
-    // =====================================================
-    // DIBUJAR
-    // =====================================================
-
-    dibujar() {
-
-        // =========================================
-        // LÍNEAS DE CONEXIÓN
-        // =========================================
-
-        for (
-            let i = 0;
-            i < this.figuras.length;
-            i++
-        ) {
-
-            for (
-                let j = i + 1;
-                j < this.figuras.length;
-                j++
-            ) {
-
-                let a =
-                    this.figuras[i];
-
-
-                let b =
-                    this.figuras[j];
-
-
-                let distancia =
-                    dist(
-                        a.pos.x,
-                        a.pos.y,
-                        b.pos.x,
-                        b.pos.y
-                    );
-
-
-                let opacidad =
-                    map(
-                        distancia,
-                        0,
-                        260,
-                        100,
-                        0,
-                        true
-                    );
-
-
-                // =================================
-                // COLOR TRIÁNGULOS
-                // =================================
-
-                if (
-                    this.tipo ===
-                    "triangulo"
-                ) {
-
-                    stroke(
-                        50,
-                        255,
-                        100,
-                        opacidad
-                    );
-                }
-
-
-                // =================================
-                // COLOR CÍRCULOS
-                // =================================
-
-                if (
-                    this.tipo ===
-                    "circulo"
-                ) {
-
-                    stroke(
-                        70,
-                        200,
-                        255,
-                        opacidad
-                    );
-                }
-
-
-                // =================================
-                // COLOR CUADRADOS
-                // =================================
-
-                if (
-                    this.tipo ===
-                    "cuadrado"
-                ) {
-
-                    stroke(
-                        255,
-                        150,
-                        40,
-                        opacidad
-                    );
-                }
-
-
-                strokeWeight(
-                    1
-                );
-
-
-                line(
-                    a.pos.x,
-                    a.pos.y,
-                    b.pos.x,
-                    b.pos.y
-                );
-            }
-        }
-
-
-        // =========================================
-        // FIGURAS
-        // =========================================
-
-        for (
-            let figura of this.figuras
-        ) {
-
-            figura.dibujar();
-        }
-    }
-
-
-    // =====================================================
-    // SEPARAR
-    // =====================================================
-
-    separar(figura) {
-
-        let indice =
-            this.figuras.indexOf(
-                figura
-            );
-
-
-        if (
-            indice !== -1
-        ) {
-
-            this.figuras.splice(
-                indice,
-                1
-            );
-        }
-
-
-        figura.grupo =
-            null;
-    }
-
-
-    // =====================================================
-    // REINCORPORAR
-    // =====================================================
-
-    reincorporar(figura) {
-
-        figura.grupo =
-            this;
-
-
-        // Adopta la dirección
-        // actual del grupo.
-
-        figura.vel =
-            this.vel.copy();
-
-
-        figura.vel.mult(
-            0.8
-        );
-
-
-        // Nueva posición dentro
-        // del grupo.
-
-        figura.offset =
-            p5.Vector.random2D();
-
-
-        figura.offset.mult(
-            random(
-                35,
-                this.radio
-            )
-        );
-
-
-        figura.reincorporando =
-            false;
-
-
-        this.figuras.push(
-            figura
-        );
-    }
 }
 
 
+  // =========================
+  // ACERCARSE AL AFECTADO
+  // =========================
 
-// =====================================================
-// FIGURA
-// =====================================================
+  acercarse(x, y) {
 
-class Figura {
+  let objetivo = createVector(x, y);
 
-    constructor(
-        tipo,
-        x,
-        y
-    ) {
+  let posicion = createVector(
+    this.x,
+    this.y
+  );
 
-        this.tipo =
-            tipo;
+  let direccion = p5.Vector.sub(
+    objetivo,
+    posicion
+  );
 
+  if (direccion.mag() > 1) {
 
-        this.pos =
-            createVector(
-                x,
-                y
-            );
+    direccion.normalize();
 
+    // Cambia de dirección suavemente
+    this.direccion.lerp(
+      direccion,
+      0.025
+    );
 
-        this.vel =
-            createVector(
-                0,
-                0
-            );
+    this.direccion.normalize();
 
+    // En vez de aumentar la velocidad
+    // de golpe, establecemos un objetivo
+    this.velocidadObjetivo = 1.2;
 
-        this.grupo =
-            null;
+  }
 
-
-        this.offset =
-            null;
-
-
-        this.tamano =
-            random(
-                18,
-                28
-            );
-
-
-        this.rotacion =
-            random(
-                TWO_PI
-            );
-
-
-        this.reincorporando =
-            false;
-    }
-
-
-    // =====================================================
-    // DETECCIÓN
-    // =====================================================
-
-    contiene(
-        x,
-        y
-    ) {
-
-        let distancia =
-            dist(
-                x,
-                y,
-                this.pos.x,
-                this.pos.y
-            );
-
-
-        return (
-            distancia <
-            this.tamano * 1.7
-        );
-    }
-
-
-    // =====================================================
-    // DIBUJAR
-    // =====================================================
-
-    dibujar() {
-
-        push();
-
-
-        translate(
-            this.pos.x,
-            this.pos.y
-        );
-
-
-        rotate(
-            this.rotacion
-        );
-
-
-        // =========================================
-        // SOLAMENTE STROKE
-        // =========================================
-
-        noFill();
-
-
-        strokeWeight(
-            2
-        );
-
-
-        // =========================================
-        // TRIÁNGULO — VERDE
-        // =========================================
-
-        if (
-            this.tipo ===
-            "triangulo"
-        ) {
-
-            stroke(
-                50,
-                255,
-                100
-            );
-
-
-            triangle(
-                0,
-                -this.tamano,
-
-                -this.tamano,
-                this.tamano,
-
-                this.tamano,
-                this.tamano
-            );
-        }
-
-
-        // =========================================
-        // CÍRCULO — CELESTE
-        // =========================================
-
-        else if (
-            this.tipo ===
-            "circulo"
-        ) {
-
-            stroke(
-                70,
-                200,
-                255
-            );
-
-
-            ellipse(
-                0,
-                0,
-                this.tamano * 2,
-                this.tamano * 2
-            );
-        }
-
-
-        // =========================================
-        // CUADRADO — NARANJA
-        // =========================================
-
-        else if (
-            this.tipo ===
-            "cuadrado"
-        ) {
-
-            stroke(
-                255,
-                150,
-                40
-            );
-
-
-            rectMode(
-                CENTER
-            );
-
-
-            rect(
-                0,
-                0,
-                this.tamano * 1.7,
-                this.tamano * 1.7
-            );
-        }
-
-
-        pop();
-    }
 }
 
 
+  // =========================
+  // VOLVERSE ROJO
+  // =========================
 
-// =====================================================
-// P5.JS
-// =====================================================
+  afectar(colorNuevo) {
 
-let sistema;
+    this.afectado = true;
+
+    this.retorno = 0;
+
+    this.colorActual =
+      colorNuevo;
+
+  }
 
 
-function setup() {
+  // =========================
+  // RECUPERARSE
+  // =========================
 
-    createCanvas(
-        windowWidth,
-        windowHeight
+  recuperar(velocidad) {
+
+    this.retorno +=
+      velocidad;
+
+
+    this.retorno =
+      constrain(
+        this.retorno,
+        0,
+        1
+      );
+
+
+    // Rojo → azul
+    this.colorActual =
+      lerpColor(
+        color(255, 60, 60),
+        this.colorOriginal,
+        this.retorno
+      );
+
+
+    // Recuperación completa
+    if (
+      this.retorno >= 1
+    ) {
+
+      this.terminarAyuda();
+
+    }
+
+  }
+
+
+  // =========================
+  // VOLVER A LA NORMALIDAD
+  // =========================
+
+  terminarAyuda() {
+
+  this.afectado = false;
+
+  this.retorno = 1;
+
+  this.colorActual =
+    this.colorOriginal;
+
+  // Nueva dirección
+  this.direccion =
+    p5.Vector.random2D();
+
+  this.direccion.normalize();
+
+  // Vuelve progresivamente
+  // a su velocidad normal
+  this.velocidadObjetivo =
+    this.velocidadBase;
+
+}
+
+
+  // =========================
+  // BORDES
+  // =========================
+
+  chequearPantalla() {
+
+    if (
+      this.x < this.radio ||
+      this.x > width - this.radio
+    ) {
+
+      this.direccion.x *= -1;
+
+    }
+
+
+    if (
+      this.y < this.radio ||
+      this.y > height - this.radio
+    ) {
+
+      this.direccion.y *= -1;
+
+    }
+
+
+    this.x = constrain(
+      this.x,
+      this.radio,
+      width - this.radio
+    );
+
+    this.y = constrain(
+      this.y,
+      this.radio,
+      height - this.radio
+    );
+
+  }
+
+
+  // =========================
+  // DIBUJAR
+  // =========================
+
+  dibujar() {
+
+    // Aura
+    noStroke();
+
+    fill(
+      red(this.colorActual),
+      green(this.colorActual),
+      blue(this.colorActual),
+      35
+    );
+
+    circle(
+      this.x,
+      this.y,
+      this.radio * 3
     );
 
 
-    sistema =
-        new Colaboracion();
-}
-
-
-function draw() {
-
-    sistema.actualizar();
-
-    sistema.dibujar();
-}
-
-
-
-// =====================================================
-// MOUSE
-// =====================================================
-
-function mousePressed() {
-
-    sistema.mousePressed();
-
-    return false;
-}
-
-
-function mouseDragged() {
-
-    sistema.mouseDragged();
-
-    return false;
-}
-
-
-function mouseReleased() {
-
-    sistema.mouseReleased();
-
-    return false;
-}
-
-
-
-// =====================================================
-// TOUCH
-// =====================================================
-
-function touchStarted() {
-
-    return sistema.touchStarted();
-}
-
-
-function touchMoved() {
-
-    return sistema.touchMoved();
-}
-
-
-function touchEnded() {
-
-    return sistema.touchEnded();
-}
-
-
-
-// =====================================================
-// REDIMENSIONAR
-// =====================================================
-
-function windowResized() {
-
-    resizeCanvas(
-        windowWidth,
-        windowHeight
+    // Círculo
+    fill(
+      this.colorActual
     );
+
+    circle(
+      this.x,
+      this.y,
+      this.radio * 2
+    );
+
+
+    // Contorno
+    noFill();
+
+    stroke(
+      this.colorActual
+    );
+
+    strokeWeight(2);
+
+    circle(
+      this.x,
+      this.y,
+      this.radio * 2
+    );
+
+  }
+
 }
