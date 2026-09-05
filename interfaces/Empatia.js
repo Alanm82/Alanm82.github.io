@@ -1,3 +1,4 @@
+class Expectativa {
 constructor() {
 
     this.personas = [];
@@ -654,3 +655,5 @@ this.velocidadObjetivo = this.velocidadBase;
   }
 
 }
+
+
