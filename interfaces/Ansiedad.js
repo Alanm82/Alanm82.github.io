@@ -8,7 +8,7 @@ class Ansiedad {
         // tamano de pantalla -- misma logica que usa Expectativa con
         // "radioPantalla", para que ambos sistemas se sientan de la misma
         // familia visual en vez de vivir a escalas distintas.
-        this.radioOrbita = min(width, height) * 0.32;
+        this.radioOrbita = min(width, height) * 0.5;
 
         // Los 4 puntos, ubicados en las diagonales alrededor del centro
         // (en vez de anclados a las esquinas reales de la pantalla)
@@ -35,6 +35,7 @@ class Ansiedad {
 
                 semillaDeriva: random(1000),
                 semillaTemblor: random(1000),
+                semillaInquietud: random(1000),
 
                 faseHalo: random(1000)
 
@@ -93,7 +94,7 @@ class Ansiedad {
         // Recalculado cada frame por si el canvas cambio de tamano; asi la
         // orbita nunca queda desalineada con el tamano real del canvas
         this.centro.set(width / 2, height / 2);
-        this.radioOrbita = min(width, height) * 0.5;
+        this.radioOrbita = min(width, height) * 0.32;
 
         this.actualizarDistanciaLejos();
 
@@ -126,9 +127,19 @@ class Ansiedad {
             let derivaX = (noise(e.semillaDeriva, millis() * 0.00012) - 0.5) * 26;
             let derivaY = (noise(e.semillaDeriva + 80, millis() * 0.00012) - 0.5) * 26;
 
+            // Inquietud: un desplazamiento real (no solo el temblor visual
+            // del dibujo) que nunca desaparece del todo. Crece con la
+            // ansiedad, pero siempre hay un piso, para que jamas esten
+            // completamente quietas
+            let inquietudX =
+                (noise(e.semillaInquietud, millis() * 0.0026) - 0.5) * (14 + e.nivelAnsiedad * 34);
+
+            let inquietudY =
+                (noise(e.semillaInquietud + 90, millis() * 0.0026) - 0.5) * (14 + e.nivelAnsiedad * 34);
+
             let posDeseada = createVector(
-                e.posBase.x + derivaX,
-                e.posBase.y + derivaY
+                e.posBase.x + derivaX + inquietudX,
+                e.posBase.y + derivaY + inquietudY
             );
 
             e.pos.lerp(posDeseada, 0.02);
@@ -143,7 +154,10 @@ class Ansiedad {
                 0
             );
 
-            e.nivelAnsiedad = constrain(nivel, 0, 1);
+            // Piso minimo: nunca llegan a estar del todo calmas
+            let nivelMinimo = 0.15;
+
+            e.nivelAnsiedad = max(constrain(nivel, 0, 1), nivelMinimo);
 
         }
 
@@ -151,19 +165,24 @@ class Ansiedad {
 
     dibujar() {
 
-        background(15);
+        background(6);
 
         // Tratamiento lineal: cada punto se conecta con el futuro segun
-        // cuanta ansiedad le genera tenerlo cerca
+        // cuanta ansiedad le genera tenerlo cerca. Mismo lenguaje visual
+        // que los hilos de Incertidumbre: un parpadeo sutil que los hace
+        // sentir menos solidos, mas nerviosos.
         for (let e of this.puntos) {
 
             let colorLinea = this.colorEstado(e.nivelAnsiedad);
+
+            let ruido = noise(e.faseHalo, millis() * 0.0012);
+            let factorParpadeo = lerp(0.75, 1, ruido);
 
             stroke(
                 red(colorLinea),
                 green(colorLinea),
                 blue(colorLinea),
-                20 + e.nivelAnsiedad * 110
+                (20 + e.nivelAnsiedad * 110) * factorParpadeo
             );
 
             strokeWeight(1 + e.nivelAnsiedad * 1.5);

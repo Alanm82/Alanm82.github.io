@@ -47,12 +47,13 @@ class Expectativa {
         this.exponenteCrecimiento = 1.8;
 
         // --- Ciclo final: pulsa varias veces al comer la ultima bolita,
-        // y recien en el ultimo pulso explota de verdad y reinicia ---
-        this.estado = 'normal'; // 'normal' | 'pulsando' | 'explotando'
+        // explota (pop breve) y despues se desinfla soltando las bolitas
+        // de a una, hasta volver al tamaño base ---
+        this.estado = 'normal'; // 'normal' | 'pulsando' | 'explotando' | 'desinflando'
 
-        this.cantidadPulsos = 4;
+        this.cantidadPulsos = 2;
         this.pulsoActual = 0;
-        this.duracionPulso = 380;
+        this.duracionPulso = 320;
         this.momentoPulso = 0;
 
         this.momentoExplosion = 0;
@@ -60,6 +61,12 @@ class Expectativa {
 
         this.explosionRadioOnda = 0;
         this.explosionAlphaOnda = 0;
+
+        // Desinfle: suelta una bolita cada tanto, mientras el radio va
+        // bajando en sincro con cuantas ya libero
+        this.cantidadLiberadas = 0;
+        this.intervaloLiberacion = 220;
+        this.momentoUltimaLiberacion = 0;
 
         // --- Bolitas chicas ---
         this.personas = [];
@@ -132,6 +139,48 @@ class Expectativa {
 
     }
 
+    // Suelta una sola bolita desde el borde actual de la esfera, con un
+    // impulso hacia afuera. Se usa durante el desinfle, una por vez.
+    liberarUnaBolita() {
+
+        let angulo = random(TWO_PI);
+
+        let pos = createVector(
+            this.centro.x + cos(angulo) * this.radioActual,
+            this.centro.y + sin(angulo) * this.radioActual
+        );
+
+        let vel = p5.Vector.fromAngle(angulo).mult(random(4, 8));
+
+        this.personas.push({
+
+            pos: pos,
+            vel: vel,
+            acc: createVector(0, 0),
+
+            masa: random(0.8, 1.5),
+            friccion: random(0.95, 0.98),
+
+            r: random(9, 16),
+
+            anguloDeriva: random(TWO_PI),
+            proximoCambioDeriva: millis() + random(1200, 3000),
+
+            faseRespira: random(TWO_PI),
+
+            temblorIntensidad: random(0.3, 1.2),
+            semillaTemblor: random(1000)
+
+        });
+
+        // Pequeño golpe de brillo y una onda corta por cada bolita liberada
+        this.fuego = min(1, this.fuego + 0.12);
+
+        this.explosionRadioOnda = this.radioActual;
+        this.explosionAlphaOnda = 160;
+
+    }
+
     aplicarFuerzaPersona(p, fuerza) {
 
         let f = fuerza.copy();
@@ -195,7 +244,7 @@ class Expectativa {
 
         }
 
-        // --- Explotando: ahora si, la explosion real, y despues reinicia ---
+        // --- Explotando: el pop inicial (hinchada + onda + cambio de color) ---
         if (this.estado === 'explotando') {
 
             let t = millis() - this.momentoExplosion;
@@ -213,7 +262,49 @@ class Expectativa {
 
                 this.radioMaximo = min(width, height) * 0.42;
 
-                this.generarPersonas();
+                // Ya popeo: ahora arranca el desinfle, soltando las
+                // bolitas de a una mientras se va achicando
+                this.estado = 'desinflando';
+                this.cantidadLiberadas = 0;
+                this.momentoUltimaLiberacion = millis();
+
+                this.radioActual = this.radioMaximo;
+                this.radioObjetivo = this.radioMaximo;
+
+            }
+
+            return;
+
+        }
+
+        // --- Desinflando: suelta las bolitas de a una, mientras el radio
+        // baja en sincro con cuantas ya libero ---
+        if (this.estado === 'desinflando') {
+
+            let progresoLiberacion = this.cantidadLiberadas / this.cantidadTotal;
+
+            this.radioObjetivo = lerp(this.radioMaximo, this.radioBase, progresoLiberacion);
+            this.radioActual = lerp(this.radioActual, this.radioObjetivo, 0.12);
+
+            this.fuego = lerp(this.fuego, this.fuegoBase, 0.03);
+
+            if (
+                this.cantidadLiberadas < this.cantidadTotal &&
+                millis() - this.momentoUltimaLiberacion > this.intervaloLiberacion
+            ) {
+
+                this.liberarUnaBolita();
+
+                this.cantidadLiberadas++;
+                this.momentoUltimaLiberacion = millis();
+
+            }
+
+            // Onda corta de cada liberacion, se desvanece independiente del estado
+            this.explosionAlphaOnda = lerp(this.explosionAlphaOnda, 0, 0.12);
+            this.explosionRadioOnda += 6;
+
+            if (this.cantidadLiberadas >= this.cantidadTotal && abs(this.radioActual - this.radioBase) < 1) {
 
                 this.absorbidas = 0;
                 this.pulsoActual = 0;
@@ -453,8 +544,8 @@ class Expectativa {
         fill(this.colorActualCirculo);
         circle(this.centro.x, this.centro.y, this.radioActual * 2);
 
-        // Onda expansiva: solo durante la explosion real
-        if (this.estado === 'explotando') {
+        // Onda expansiva: durante el pop inicial y en cada liberacion del desinfle
+        if (this.explosionAlphaOnda > 0.5) {
 
             noFill();
             stroke(255, 255, 255, this.explosionAlphaOnda);
